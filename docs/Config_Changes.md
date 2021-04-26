@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20210426: The gcode_macro `default_parameter_<name>` config option is
+deprecated. It will be removed in the near future. Use the Jinja2
+`set` directive as a replacement. See the [Command Templates
+document](Command_Templates.md#macro-parameters) for an example.
+
 20210325: Support for the `pin_map` config option is deprecated. Use
 the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
 translate to the actual micro-controller pin names. The `pin_map`
