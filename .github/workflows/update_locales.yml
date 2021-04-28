@@ -18,8 +18,6 @@ jobs:
       run: pip3 install mdpo
     - name: add permission
       run: chmod +x update_locales.sh
-    - name: list readme.md
-      run: cat README.md
     - name: run update_locales.sh
       run: bash update_locales.sh
     - uses: stefanzweifel/git-auto-commit-action@v4
