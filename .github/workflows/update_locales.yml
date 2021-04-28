@@ -3,6 +3,10 @@ name: Update Locales
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: docs
+
 jobs:
   build:
 
@@ -13,10 +17,8 @@ jobs:
     - name: install mdpo
       run: pip3 install mdpo
     - name: add execute permission
-      working-directory: ./docs
       run: chmod +x ./update_locales.sh
     - name: run update_locales.sh
-      working-directory: ./docs
       run: ./update_locales.sh
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
