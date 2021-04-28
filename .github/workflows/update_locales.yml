@@ -1,0 +1,19 @@
+name: Update Locales
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Enter docs directory
+      run: cd ./docs
+    - name: run update_locales.sh
+      run: ./update_locales.sh
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Apply documentation changes
