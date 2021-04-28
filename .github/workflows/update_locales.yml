@@ -10,9 +10,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Enter docs directory
-      run: cd ./docs
     - name: run update_locales.sh
+      working-directory: ./docs
       run: ./update_locales.sh
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
