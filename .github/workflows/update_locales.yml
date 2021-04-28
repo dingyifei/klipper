@@ -21,7 +21,7 @@ jobs:
     - name: list readme.md
       run: cat README.md
     - name: run update_locales.sh
-      run: update_locales.sh
+      run: bash update_locales.sh
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: Apply documentation changes
