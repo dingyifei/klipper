@@ -10,6 +10,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: install python3, python3-pip
+      run: apt install -y python3 python3-pip
+    - name: install mdpo
+      run: pip3 install mdpo
     - name: add execute permission
       working-directory: ./docs
       run: chmod +x ./update_locales.sh
