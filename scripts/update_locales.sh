@@ -8,9 +8,12 @@ for file in docs/*.md; do
   mdfile=${file/docs\//}
   potfile=${mdfile//.md/.pot}
   echo "Converting $mdfile to $potfile"
-  md2po $mdfile --md-encoding utf-8 --po-encoding utf-8 \
-  -e utf-8 -w 71 -q -s --po-filepath docs/locales/en/$potfile
+  echo "md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+   -e utf-8 -w 71 -q -s --po-filepath docs/locales/en/$potfile"
+  md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 -e utf-8 \
+  -w 71 -q -s --po-filepath docs/locales/en/$potfile
 done
+md2po API_Server.md --md-encoding utf-8 --po-encoding utf-8 -e utf-8 -w 71 -q -s --po-filepath docs/locales/en/API_Server.pot
 
 for dir in docs/locales/*/; do
   dir=${dir%*/}
@@ -21,12 +24,15 @@ for dir in docs/locales/*/; do
       mdfile=${file/docs\//}
       pofile=${mdfile//.md/.po}
       echo "Converting $mdfile to $pofile"
-      md2po $mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      echo "md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      -e utf-8 -w 71 -q -s --po-filepath docs/locales/$dir/LC_MESSAGES/$pofile"
+      md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
       -e utf-8 -w 71 -q -s --po-filepath docs/locales/$dir/LC_MESSAGES/$pofile
-
       echo "Converting $pofile to $mdfile"
-      po2md $mdfile --md-encoding utf-8 --po-encoding utf-8 \
-      --pofiles docs/locales/$dir/LC_MESSAGES/$pofile -q -s docs/locales/$dir/$mdfile
+      echo "po2md docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      -p docs/locales/$dir/LC_MESSAGES/$pofile -q -s docs/locales/$dir/$mdfile"
+      po2md docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      -p docs/locales/$dir/LC_MESSAGES/$pofile -q -s docs/locales/$dir/$mdfile
     done
   fi
 done
