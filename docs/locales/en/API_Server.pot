@@ -2,8 +2,8 @@
 msgid ""
 msgstr ""
 
-msgid "API_Server.md"
-msgstr ""
+#~ msgid "API_Server.md"
+#~ msgstr ""
 
 #~ msgid ""
 #~ "This document describes Klipper's Application Programmer Interface "
