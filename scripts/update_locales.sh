@@ -9,10 +9,10 @@ for file in docs/*.md; do
   mdfile=${file/docs\//}
   potfile=${mdfile//.md/.pot}
   echo "Converting $mdfile to $potfile"
-  echo "md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
-   -e utf-8 -w $width -q -s --po-filepath docs/locales/en/$potfile"
-  md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 -e utf-8 \
-  -w $width -q -s --po-filepath docs/locales/en/$potfile
+  command="md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 -e utf-8 \
+  -w $width -q -s --po-filepath docs/locales/en/$potfile"
+  echo "$command"
+  $($command)
 done
 
 for dir in docs/locales/*/; do
@@ -24,15 +24,15 @@ for dir in docs/locales/*/; do
       mdfile=${file/docs\//}
       pofile=${mdfile//.md/.po}
       echo "Converting $mdfile to $pofile"
-      echo "md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      command="md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
       -e utf-8 -w $width -q -s --po-filepath docs/locales/$dir/LC_MESSAGES/$pofile"
-      md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
-      -e utf-8 -w $width -q -s --po-filepath docs/locales/$dir/LC_MESSAGES/$pofile
+      echo "$command"
+      $($command)
       echo "Converting $pofile to $mdfile"
-      echo "po2md docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
+      command="po2md docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
       -p docs/locales/$dir/LC_MESSAGES/$pofile -q -s docs/locales/$dir/$mdfile"
-      po2md docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 \
-      -p docs/locales/$dir/LC_MESSAGES/$pofile -q -s docs/locales/$dir/$mdfile
+      echo "$command"
+      $($command)
     done
   fi
 done
