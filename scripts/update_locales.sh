@@ -8,6 +8,7 @@ width=71
 for file in docs/*.md; do
   mdfile=${file/docs\//}
   potfile=${mdfile//.md/.pot}
+  cat $mdfile
   echo "Converting $mdfile to $potfile"
   command="md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 -e utf-8 \
   -w $width -q -s --po-filepath docs/locales/en/$potfile"
