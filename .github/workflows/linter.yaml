@@ -55,3 +55,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: false
           FILTER_REGEX_EXCLUDE: .*lib/*
+          VALIDATE_CLANG_FORMAT: false
