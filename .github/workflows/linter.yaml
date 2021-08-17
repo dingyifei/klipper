@@ -123,4 +123,3 @@ jobs:
           VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_XML: false
           VALIDATE_YAML: false
-          YAML_CONFIG_FILE: false
