@@ -54,3 +54,4 @@ jobs:
           DEFAULT_BRANCH: markdownlint
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: false
+          FILTER_REGEX_EXCLUDE: .*lib/*
