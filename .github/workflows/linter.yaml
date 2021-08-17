@@ -86,7 +86,7 @@ jobs:
           VALIDATE_KUBERNETES_KUBEVAL: false
           VALIDATE_LATEX: false
           VALIDATE_LUA: false
-          VALIDATE_MARKDOWN: true
+          #VALIDATE_MARKDOWN: false
           VALIDATE_OPENAPI: false
           VALIDATE_PERL: false
           VALIDATE_PHP: false
