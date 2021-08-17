@@ -51,6 +51,6 @@ jobs:
         uses: github/super-linter@v4
         env:
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: master
+          DEFAULT_BRANCH: markdownlint
           FILTER_REGEX_INCLUDE: docs/*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
