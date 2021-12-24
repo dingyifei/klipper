@@ -398,7 +398,7 @@ class GCodeIO:
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
-            data = str(os.read(self.fd, 4096).decode('utf-8'))
+            data = str(os.read(self.fd, 4096).decode('utf-8'), 'utf-8')
         except (os.error, UnicodeDecodeError):
             logging.exception("Read g-code")
             return
