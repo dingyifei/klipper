@@ -398,7 +398,7 @@ class GCodeIO:
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
-            data = str(os.read(self.fd, 4096).decode())
+            data = str(os.read(self.fd, 4096).decode('utf-8'))
         except (os.error, UnicodeDecodeError):
             logging.exception("Read g-code")
             return
@@ -444,7 +444,7 @@ class GCodeIO:
     def _respond_raw(self, msg):
         if self.pipe_is_active:
             try:
-                os.write(self.fd, (msg+"\n").encode())
+                os.write(self.fd, (msg+"\n").encode('utf-8'))
             except os.error:
                 logging.exception("Write g-code response")
                 self.pipe_is_active = False
