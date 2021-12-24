@@ -1,0 +1,9 @@
+; Virtual SD card gcode filename unit tests
+
+DICTIONARY atmega2560.dict
+CONFIG sdcard_loop.cfg
+
+G28
+SDCARD_LOOP_DESIST
+; Verify different encoding
+SDCARD_PRINT_FILE FILENAME=中文.gcode
