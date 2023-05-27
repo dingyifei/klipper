@@ -256,7 +256,6 @@ class DockableProbe:
                                             self._handle_connect)
         self.printer.register_event_handler('klippy:ready',
                                             self._handle_ready)
-        self.printer.register_event_handler('klippy:mcu_identify', self._handle_mcu_identify)
         self.printer.register_event_handler('homing:home_rails_begin',
                                             self._handle_homing_rails_begin)
         self.printer.register_event_handler('homing:home_rails_end',
