@@ -63,7 +63,7 @@ document, the commands and parameters are shown in uppercase, however
 they are not case sensitive. (So, "SET_SERVO" and "set_servo" both run
 the same command.)
 
-This section is organized my Klipper module name, which generally
+This section is organized by Klipper module name, which generally
 follows the section names specified in the
 [printer configuration file](Config_Reference.md). Note that some
 modules are automatically loaded.
@@ -146,14 +146,15 @@ The following commands are available when the
 (also see the [bed mesh guide](Bed_Mesh.md)).
 
 #### BED_MESH_CALIBRATE
-`BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]
-[<mesh_parameter>=<value>]`: This command probes the bed using
-generated points specified by the parameters in the config. After
-probing, a mesh is generated and z-movement is adjusted according to
-the mesh. See the PROBE command for details on the optional probe
-parameters. If METHOD=manual is specified then the manual probing tool
-is activated - see the MANUAL_PROBE command above for details on the
-additional commands available while this tool is active.
+`BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
+[<probe_parameter>=<value>] [<mesh_parameter>=<value>]`: This command probes
+the bed using generated points specified by the parameters in the config. After
+probing, a mesh is generated and z-movement is adjusted according to the mesh.
+See the PROBE command for details on the optional probe parameters. If
+METHOD=manual is specified then the manual probing tool is activated - see the
+MANUAL_PROBE command above for details on the additional commands available
+while this tool is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
+`horizontal_move_z` option specified in the config file.
 
 #### BED_MESH_OUTPUT
 `BED_MESH_OUTPUT PGP=[<0:1>]`: This command outputs the current probed
@@ -207,13 +208,14 @@ The following commands are available when the
 [bed_tilt config section](Config_Reference.md#bed_tilt) is enabled.
 
 #### BED_TILT_CALIBRATE
-`BED_TILT_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`: This
-command will probe the points specified in the config and then
-recommend updated x and y tilt adjustments. See the PROBE command for
-details on the optional probe parameters. If METHOD=manual is
-specified then the manual probing tool is activated - see the
-MANUAL_PROBE command above for details on the additional commands
-available while this tool is active.
+`BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
+[<probe_parameter>=<value>]`: This command will probe the points specified in
+the config and then recommend updated x and y tilt adjustments. See the PROBE
+command for details on the optional probe parameters. If METHOD=manual is
+specified then the manual probing tool is activated - see the MANUAL_PROBE
+command above for details on the additional commands available while this tool
+is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
+`horizontal_move_z` option specified in the config file.
 
 ### [bltouch]
 
@@ -262,13 +264,14 @@ The following commands are available when the
 is enabled (also see the [delta calibrate guide](Delta_Calibrate.md)).
 
 #### DELTA_CALIBRATE
-`DELTA_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`: This
-command will probe seven points on the bed and recommend updated
-endstop positions, tower angles, and radius. See the PROBE command for
-details on the optional probe parameters. If METHOD=manual is
-specified then the manual probing tool is activated - see the
-MANUAL_PROBE command above for details on the additional commands
-available while this tool is active.
+`DELTA_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
+[<probe_parameter>=<value>]`: This command will probe seven points on the bed
+and recommend updated endstop positions, tower angles, and radius. See the
+PROBE command for details on the optional probe parameters. If METHOD=manual is
+specified then the manual probing tool is activated - see the MANUAL_PROBE
+command above for details on the additional commands available while this tool
+is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
+`horizontal_move_z` option specified in the config file.
 
 #### DELTA_ANALYZE
 `DELTA_ANALYZE`: This command is used during enhanced delta
@@ -295,6 +298,11 @@ provides the following standard G-Code commands:
 - Display Message: `M117 <message>`
 - Set build percentage: `M73 P<percent>`
 
+Also provided is the following extended G-Code command:
+- `SET_DISPLAY_TEXT MSG=<message>`: Performs the equivalent of M117,
+  setting the supplied `MSG` as the current display message.  If
+  `MSG` is omitted the display will be cleared.
+
 ### [dual_carriage]
 
 The following command is available when the
@@ -320,6 +328,57 @@ parameter is provided it arranges for the given endstop phase setting
 to be written to the config file (in conjunction with the SAVE_CONFIG
 command).
 
+### [exclude_object]
+
+The following commands are available when an
+[exclude_object config section](Config_Reference.md#exclude_object) is
+enabled (also see the [exclude object guide](Exclude_Object.md)):
+
+#### `EXCLUDE_OBJECT`
+`EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]`:
+With no parameters, this will return a list of all currently excluded objects.
+
+When the `NAME` parameter is given, the named object will be excluded from
+printing.
+
+When the `CURRENT` parameter is given, the current object will be excluded from
+printing.
+
+When the `RESET` parameter is given, the list of excluded objects will be
+cleared. Additionally including `NAME` will only reset the named object. This
+**can** cause print failures, if layers were already skipped.
+
+#### `EXCLUDE_OBJECT_DEFINE`
+`EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]]
+[RESET=1] [JSON=1]`:
+Provides a summary of an object in the file.
+
+With no parameters provided, this will list the defined objects known to
+Klipper. Returns a list of strings, unless the `JSON` parameter is given,
+when it will return object details in json format.
+
+When the `NAME` parameter is included, this defines an object to be excluded.
+
+  - `NAME`: This parameter is required.  It is the identifier used by other
+    commands in this module.
+  - `CENTER`: An X,Y coordinate for the object.
+  - `POLYGON`: An array of X,Y coordinates that provide an outline for the
+    object.
+
+When the `RESET` parameter is provided, all defined objects will be cleared, and
+the `[exclude_object]` module will be reset.
+
+#### `EXCLUDE_OBJECT_START`
+`EXCLUDE_OBJECT_START NAME=object_name`:
+This command takes a `NAME` parameter and denotes the start of the gcode for an
+object on the current layer.
+
+#### `EXCLUDE_OBJECT_END`
+`EXCLUDE_OBJECT_END [NAME=object_name]`:
+Denotes the end of the object's gcode for the layer. It is paired with
+`EXCLUDE_OBJECT_START`. A `NAME` parameter is optional, and will only warn when
+the provided name does not match the current object.
+
 ### [extruder]
 
 The following commands are available if an
@@ -335,8 +394,8 @@ changes the active hotend.
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
 parameters of an extruder stepper (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If EXTRUDER is not specified, it defaults to the stepper defined in
 the active hotend.
 
@@ -344,8 +403,8 @@ the active hotend.
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder
 stepper's "rotation distance" (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If the rotation distance is a negative number then the stepper motion
 will be inverted (relative to the stepper direction specified in the
 config file). Changed settings are not retained on Klipper reset. Use
@@ -357,10 +416,10 @@ current rotation distance.
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
 command will cause the stepper specified by EXTRUDER (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section)
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section)
 to become synchronized to the movement of an extruder specified by
-MOTION_QUEUE (as defined in an [extruder](Config_Reference#extruder)
+MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
@@ -436,7 +495,7 @@ retraction and displays them on the terminal.
 
 The force_move module is automatically loaded, however some commands
 require setting `enable_force_move` in the
-[printer config](Config_Reference#force_move).
+[printer config](Config_Reference.md#force_move).
 
 #### STEPPER_BUZZ
 `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
@@ -493,8 +552,9 @@ clears any error state from the micro-controller.
 The following standard G-Code commands are available if a
 [gcode_arcs config section](Config_Reference.md#gcode_arcs) is
 enabled:
-- Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
-  [E<pos>] [F<speed>] I<value> J<value>`
+- Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): `G2|G3 [X<pos>] [Y<pos>] [Z<pos>]
+  [E<pos>] [F<speed>] I<value> J<value>|I<value> K<value>|J<value> K<value>`
+- Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)
 
 ### [gcode_macro]
 
@@ -690,6 +750,20 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
+### [mcp4018]
+
+The following command is available when a
+[mcp4018 config section](Config_Reference.md#mcp4018) is
+enabled.
+
+#### SET_DIGIPOT
+
+`SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
+change the current value of the digipot.  This value should typically
+be between 0.0 and 1.0, unless a 'scale' is defined in the config.
+When 'scale' is defined, then this value should be  between 0.0 and
+'scale'.
+
 ### [led]
 
 The following command is available when any of the
@@ -740,9 +814,17 @@ The following command is available when an
 enabled.
 
 #### SET_PIN
-`SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`:
-Note - hardware PWM does not currently support the CYCLE_TIME
-parameter and will use the cycle time defined in the config.
+`SET_PIN PIN=config_name VALUE=<value> [CYCLE_TIME=<cycle_time>]`: Set
+the pin to the given output `VALUE`. VALUE should be 0 or 1 for
+"digital" output pins. For PWM pins, set to a value between 0.0 and
+1.0, or between 0.0 and `scale` if a scale is configured in the
+output_pin config section.
+
+Some pins (currently only "soft PWM" pins) support setting an explicit
+cycle time using the CYCLE_TIME parameter (specified in seconds). Note
+that the CYCLE_TIME parameter is not stored between SET_PIN commands
+(any SET_PIN command without an explicit CYCLE_TIME parameter will use
+the `cycle_time` specified in the output_pin config section).
 
 ### [palette2]
 
@@ -818,6 +900,18 @@ the paused state is fresh for each print.
 #### CANCEL_PRINT
 `CANCEL_PRINT`: Cancels the current print.
 
+### [print_stats]
+
+The print_stats module is automatically loaded.
+
+#### SET_PRINT_STATS_INFO
+`SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>] [CURRENT_LAYER=
+<current_layer>]`: Pass slicer info like layer act and total to Klipper.
+Add `SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>]` to your
+slicer start gcode section and `SET_PRINT_STATS_INFO [CURRENT_LAYER=
+<current_layer>]` at the layer change gcode section to pass layer
+information from your slicer to Klipper.
+
 ### [probe]
 
 The following commands are available when a
@@ -861,7 +955,7 @@ Requires a `SAVE_CONFIG` to take effect.
 
 ### [query_adc]
 
-The query_endstops module is automatically loaded.
+The query_adc module is automatically loaded.
 
 #### QUERY_ADC
 `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
@@ -896,30 +990,35 @@ all enabled accelerometer chips.
 #### TEST_RESONANCES
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-[HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
+[HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
+[POINT=x,y,z] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
 the respective axis. "axis" can either be X or Y, or specify an
 arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
 `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. If `INPUT_SHAPING=0` or not set
-(default), disables input shaping for the resonance testing, because
+and `AXIS=-dx,-dy` is equivalent. `adxl345_chip_name` can be one or
+more configured adxl345 chip,delimited with comma, for example
+`CHIPS="adxl345, adxl345 rpi"`. Note that `adxl345` can be omitted from
+named adxl345 chips. If POINT is specified it will override the point(s)
+configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
+disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
 enabled. `OUTPUT` parameter is a comma-separated list of which outputs
 will be written. If `raw_data` is requested, then the raw
 accelerometer data is written into a file or a series of files
-`/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
-the name generated only if more than 1 probe point is configured).  If
-`resonances` is specified, the frequency response is calculated
-(across all probe points) and written into
+`/tmp/raw_data_<axis>_[<chip_name>_][<point>_]<name>.csv` with
+(`<point>_` part of the name generated only if more than 1 probe point
+is configured or POINT is specified). If `resonances` is specified, the
+frequency response is calculated (across all probe points) and written into
 `/tmp/resonances_<axis>_<name>.csv` file. If unset, OUTPUT defaults to
 `resonances`, and NAME defaults to the current time in
 "YYYYMMDD_HHMMSS" format.
 
 #### SHAPER_CALIBRATE
 `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>] [FREQ_START=<min_freq>]
-[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]
+[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
 [MAX_SMOOTHING=<max_smoothing>]`: Similarly to `TEST_RESONANCES`, runs
 the resonance test as configured, and tries to find the optimal
 parameters for the input shaper for the requested axis (or both X and
@@ -933,7 +1032,9 @@ frequency responses and the different input shapers values are written
 to a CSV file(s) `/tmp/calibration_data_<axis>_<name>.csv`. Unless
 specified, NAME defaults to the current time in "YYYYMMDD_HHMMSS"
 format. Note that the suggested input shaper parameters can be
-persisted in the config by issuing `SAVE_CONFIG` command.
+persisted in the config by issuing `SAVE_CONFIG` command, and if
+`[input_shaper]` was already enabled previously, these parameters
+take effect immediately.
 
 ### [respond]
 
@@ -949,6 +1050,8 @@ The following additional commands are also available.
   configured default prefix (or `echo: ` if no prefix is configured).
 - `RESPOND TYPE=echo MSG="<message>"`: echo the message prepended with
   `echo: `.
+- `RESPOND TYPE=echo_no_space MSG="<message>"`: echo the message prepended with
+  `echo:` without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.
 - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended
   with `// `.  OctoPrint can be configured to respond to these messages
   (e.g.  `RESPOND TYPE=command MSG=action:pause`).
@@ -979,15 +1082,18 @@ is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)).
 
 #### SCREWS_TILT_CALCULATE
-`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW]
-[<probe_parameter>=<value>]`: This command will invoke the bed screws
-adjustment tool. It will command the nozzle to different locations (as
-defined in the config file) probing the z height and calculate the
-number of knob turns to adjust the bed level. If DIRECTION is
-specified, the knob turns will all be in the same direction, clockwise
-(CW) or counterclockwise (CCW). See the PROBE command for details on
-the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command.
+`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=<value>]
+[HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command will
+invoke the bed screws adjustment tool. It will command the nozzle to different
+locations (as defined in the config file) probing the z height and calculate
+the number of knob turns to adjust the bed level. If DIRECTION is specified,
+the knob turns will all be in the same direction, clockwise (CW) or
+counterclockwise (CCW). See the PROBE command for details on the optional probe
+parameters. IMPORTANT: You MUST always do a G28 before using this command. If
+MAX_DEVIATION is specified, the command will raise a gcode error if any
+difference in the screw height relative to the base screw height is greater
+than the value provided. The optional `HORIZONTAL_MOVE_Z` value overrides the
+`horizontal_move_z` option specified in the config file.
 
 ### [sdcard_loop]
 
@@ -1115,8 +1221,9 @@ The following commands are available when any of the
 are enabled.
 
 #### DUMP_TMC
-`DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
-registers and report their values.
+`DUMP_TMC STEPPER=<name> [REGISTER=<name>]`: This command will read all TMC
+driver registers and report their values. If a REGISTER is provided, only
+the specified register will be dumped.
 
 #### INIT_TMC
 `INIT_TMC STEPPER=<name>`: This command will initialize the TMC
@@ -1126,16 +1233,22 @@ turned off then back on.
 #### SET_TMC_CURRENT
 `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
 This will adjust the run and hold currents of the TMC driver.
-(HOLDCURRENT is not applicable to tmc2660 drivers.)
+`HOLDCURRENT` is not applicable to tmc2660 drivers.
+When used on a driver which has the `globalscaler` field (tmc5160 and tmc2240),
+if StealthChop2 is used, the stepper must be held at standstill for >130ms so
+that the driver executes the AT#1 calibration.
 
 #### SET_TMC_FIELD
-`SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
-alter the value of the specified register field of the TMC driver.
+`SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value> VELOCITY=<value>`:
+This will alter the value of the specified register field of the TMC driver.
 This command is intended for low-level diagnostics and debugging only
 because changing the fields during run-time can lead to undesired and
 potentially dangerous behavior of your printer. Permanent changes
 should be made using the printer configuration file instead. No sanity
 checks are performed for the given values.
+A VELOCITY can also be specified instead of a VALUE. This velocity is
+converted to the 20bit TSTEP based value representation. Only use the VELOCITY
+argument for fields that represent velocities.
 
 ### [toolhead]
 
@@ -1202,325 +1315,32 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
-## G-Code firmware retraction
+### [z_thermal_adjust]
 
-The following standard G-Code commands are available if a
-[firmware_retraction config section](Config_Reference.md#firmware_retraction)
-is enabled:
-- Retract: `G10`
-- Unretract: `G11`
+The following commands are available when the
+[z_thermal_adjust config section](Config_Reference.md#z_thermal_adjust)
+is enabled.
 
-## G-Code display commands
+#### SET_Z_THERMAL_ADJUST
+`SET_Z_THERMAL_ADJUST [ENABLE=<0:1>] [TEMP_COEFF=<value>] [REF_TEMP=<value>]`:
+Enable or disable the Z thermal adjustment with `ENABLE`. Disabling does not
+remove any adjustment already applied, but will freeze the current adjustment
+value - this prevents potentially unsafe downward Z movement. Re-enabling can
+potentially cause upward tool movement as the adjustment is updated and applied.
+`TEMP_COEFF` allows run-time tuning of the adjustment temperature coefficient
+(i.e. the `TEMP_COEFF` config parameter). `TEMP_COEFF` values are not saved to
+the config. `REF_TEMP` manually overrides the reference temperature typically
+set during homing (for use in e.g. non-standard homing routines) - will be reset
+automatically upon homing.
 
-The following standard G-Code commands are available if a
-[display config section](Config_Reference.md#display) is enabled:
-- Display Message: `M117 <message>`
-- Set build percentage: `M73 P<percent>`
-
-## Other available G-Code commands
-
-The following standard G-Code commands are currently available, but
-using them is not recommended:
-- Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
-
-# Extended G-Code Commands
-
-Klipper uses "extended" G-Code commands for general configuration and
-status.  These extended commands all follow a similar format - they
-start with a command name and may be followed by one or more
-parameters. For example: `SET_SERVO SERVO=myservo ANGLE=5.3`. In this
-document, the commands and parameters are shown in uppercase, however
-they are not case sensitive. (So, "SET_SERVO" and "set_servo" both run
-the same command.)
-
-The following standard commands are supported:
-- `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
-  "triggered" or in an "open" state. This command is typically used to
-  verify that an endstop is working correctly.
-- `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
-  analog value received for a configured analog pin. If NAME is not
-  provided, the list of available adc names are reported. If PULLUP is
-  provided (as a value in Ohms), the raw analog value along with the
-  equivalent resistance given that pullup is reported.
-- `GET_POSITION`: Return information on the current location of the
-  toolhead.
-- `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
-  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]
-  [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
-  future G-Code commands. This is commonly used to virtually change
-  the Z bed offset or to set nozzle XY offsets when switching
-  extruders. For example, if "SET_GCODE_OFFSET Z=0.2" is sent, then
-  future G-Code moves will have 0.2mm added to their Z height. If the
-  X_ADJUST style parameters are used, then the adjustment will be
-  added to any existing offset (eg, "SET_GCODE_OFFSET Z=-0.2" followed
-  by "SET_GCODE_OFFSET Z_ADJUST=0.3" would result in a total Z offset
-  of 0.1). If "MOVE=1" is specified then a toolhead move will be
-  issued to apply the given offset (otherwise the offset will take
-  effect on the next absolute G-Code move that specifies the given
-  axis). If "MOVE_SPEED" is specified then the toolhead move will be
-  performed with the given speed (in mm/s); otherwise the toolhead
-  move will use the last specified G-Code speed.
-- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
-  g-code coordinate parsing state. Saving and restoring the g-code
-  state is useful in scripts and macros. This command saves the
-  current g-code absolute coordinate mode (G90/G91), absolute extrude
-  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
-  override (M220), extruder override (M221), move speed, current XYZ
-  position, and relative extruder "E" position. If NAME is provided it
-  allows one to name the saved state to the given string. If NAME is
-  not provided it defaults to "default".
-- `RESTORE_GCODE_STATE [NAME=<state_name>]
-  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
-  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
-  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
-  is specified then the toolhead move will be performed with the given
-  speed (in mm/s); otherwise the toolhead move will use the restored
-  g-code speed.
-- `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
-  [WRITE_FILE=1]`: Perform a PID calibration test. The specified
-  heater will be enabled until the specified target temperature is
-  reached, and then the heater will be turned off and on for several
-  cycles. If the WRITE_FILE parameter is enabled, then the file
-  /tmp/heattest.txt will be created with a log of all temperature
-  samples taken during the test.
-- `TURN_OFF_HEATERS`: Turn off all heaters.
-- `TEMPERATURE_WAIT SENSOR=<config_name> [MINIMUM=<target>] [MAXIMUM=<target>]`:
-  Wait until the given temperature sensor is at or above the supplied
-  MINIMUM and/or at or below the supplied MAXIMUM.
-- `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
-  the printer's velocity limits. Note that one may only set values
-  less than or equal to the limits specified in the config file.
-- `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
-  Sets the target temperature for a heater. If a target temperature is
-  not supplied, the target is 0.
-- `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with
-  multiple extruders this command is used to change the active
-  extruder.
-- `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
-  [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
-  parameters. If EXTRUDER is not specified, it defaults to the active
-  extruder.
-- `SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>]
-  [DISTANCE=<distance>]`: Set a new value for the provided extruder's
-  "step distance". The "step distance" is
-  `rotation_distance/(full_steps_per_rotation*microsteps)`. Value is
-  not retained on Klipper reset. Use with caution, small changes can
-  result in excessive pressure between extruder and hot end. Do proper
-  calibration steps with filament before use. If 'DISTANCE' value is
-  not included command will return current step distance.
-- `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
-  disable only the given stepper. This is a diagnostic and debugging
-  tool and must be used with care. Disabling an axis motor does not
-  reset the homing information. Manually moving a disabled stepper may
-  cause the machine to operate the motor outside of safe limits. This
-  can lead to damage to axis components, hot ends, and print surface.
-- `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
-  one mm and then backward one mm, repeated 10 times. This is a
-  diagnostic tool to help verify stepper connectivity.
-- `MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
-  measuring the height of the nozzle at a given location. If SPEED is
-  specified, it sets the speed of TESTZ commands (the default is
-  5mm/s). During a manual probe, the following additional commands are
-  available:
-  - `ACCEPT`: This command accepts the current Z position and
-  concludes the manual probing tool.
-  - `ABORT`: This command terminates the manual probing tool.
-  - `TESTZ Z=<value>`: This command moves the nozzle up or down by the
-    amount specified in "value". For example, `TESTZ Z=-.1` would move
-    the nozzle down .1mm while `TESTZ Z=.1` would move the nozzle up
-    .1mm. The value may also be `+`, `-`, `++`, or `--` to move the
-    nozzle up or down an amount relative to previous attempts.
-- `Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful
-  for calibrating a Z position_endstop config setting. See the
-  MANUAL_PROBE command for details on the parameters and the
-  additional commands available while the tool is active.
-- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
-  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
-  each Z height during a print. The tool will run the given COMMAND
-  with the given PARAMETER assigned to the value using the formula
-  `value = start + factor * z_height`. If BAND is provided then the
-  adjustment will only be made every BAND millimeters of z height - in
-  that case the formula used is `value = start + factor *
-  ((floor(z_height / band) + .5) * band)`.
-- `SET_DISPLAY_GROUP [DISPLAY=<display>] GROUP=<group>`: Set the
-  active display group of an lcd display. This allows to define
-  multiple display data groups in the config,
-  e.g. `[display_data <group> <elementname>]` and switch between them
-  using this extended gcode command. If DISPLAY is not specified it
-  defaults to "display" (the primary display).
-- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
-  idle timeout (in seconds).
-- `RESTART`: This will cause the host software to reload its config
-  and perform an internal reset. This command will not clear error
-  state from the micro-controller (see FIRMWARE_RESTART) nor will it
-  load new software (see
-  [the FAQ](FAQ.md#how-do-i-upgrade-to-the-latest-software)).
-- `FIRMWARE_RESTART`: This is similar to a RESTART command, but it
-  also clears any error state from the micro-controller.
-- `SAVE_CONFIG`: This command will overwrite the main printer config
-  file and restart the host software. This command is used in
-  conjunction with other calibration commands to store the results of
-  calibration tests.
-- `STATUS`: Report the Klipper host software status.
-- `HELP`: Report the list of available extended G-Code commands.
-
-## G-Code Macro Commands
-
-The following command is available when a
-[gcode_macro config section](Config_Reference.md#gcode_macro) is
-enabled (also see the
-[command templates guide](Command_Templates.md)):
-- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
-  VALUE=<value>`: This command allows one to change the value of a
-  gcode_macro variable at run-time. The provided VALUE is parsed as a
-  Python literal.
-
-## Custom Pin Commands
-
-The following command is available when an
-[output_pin config section](Config_Reference.md#output_pin) is
-enabled:
-- `SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`
-
-Note: Hardware PWM does not currently support the CYCLE_TIME parameter
-and will use the cycle time defined in the config.
-
-## Manually Controlled Fans Commands
-
-The following command is available when a
-[fan_generic config section](Config_Reference.md#fan_generic) is
-enabled:
-- `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets
-  the speed of a fan. <speed> must be between 0.0 and 1.0.
-
-## Neopixel and Dotstar Commands
-
-The following command is available when a
-[neopixel config section](Config_Reference.md#neopixel) or
-[dotstar config section](Config_Reference.md#dotstar) is enabled:
-- `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-  WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
-  output. Each color `<value>` must be between 0.0 and 1.0. The WHITE
-  option is only valid on RGBW LEDs. If multiple LED chips are
-  daisy-chained then one may specify INDEX to alter the color of just
-  the given chip (1 for the first chip, 2 for the second, etc.). If
-  INDEX is not provided then all LEDs in the daisy-chain will be set
-  to the provided color. If TRANSMIT=0 is specified then the color
-  change will only be made on the next SET_LED command that does not
-  specify TRANSMIT=0; this may be useful in combination with the INDEX
-  parameter to batch multiple updates in a daisy-chain.
-
-## Servo Commands
-
-The following commands are available when a
-[servo config section](Config_Reference.md#servo) is enabled:
-- `SET_SERVO SERVO=config_name [ANGLE=<degrees> | WIDTH=<seconds>]`:
-  Set the servo position to the given angle (in degrees) or pulse
-  width (in seconds). Use `WIDTH=0` to disable the servo output.
-
-## Manual stepper Commands
-
-The following command is available when a
-[manual_stepper config section](Config_Reference.md#manual_stepper) is
-enabled:
-- `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
-  [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
-  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]`: This command
-  will alter the state of the stepper. Use the ENABLE parameter to
-  enable/disable the stepper. Use the SET_POSITION parameter to force
-  the stepper to think it is at the given position. Use the MOVE
-  parameter to request a movement to the given position. If SPEED
-  and/or ACCEL is specified then the given values will be used instead
-  of the defaults specified in the config file. If an ACCEL of zero is
-  specified then no acceleration will be performed. If
-  STOP_ON_ENDSTOP=1 is specified then the move will end early should
-  the endstop report as triggered (use STOP_ON_ENDSTOP=2 to complete
-  the move without error even if the endstop does not trigger, use -1
-  or -2 to stop when the endstop reports not triggered). Normally
-  future G-Code commands will be scheduled to run after the stepper
-  move completes, however if a manual stepper move uses SYNC=0 then
-  future G-Code movement commands may run in parallel with the stepper
-  movement.
-
-## Extruder stepper Commands
-
-The following command is available when an
-[extruder_stepper config section](Config_Reference.md#extruder_stepper)
-is enabled:
-- `SYNC_STEPPER_TO_EXTRUDER STEPPER=<extruder_stepper config_name>
-  [EXTRUDER=<extruder config_name>]`: This command will cause the given
-  STEPPER to become synchronized to the given EXTRUDER, overriding
-  the extruder defined in the "extruder_stepper" config section.
-
-## Probe
-
-The following commands are available when a
-[probe config section](Config_Reference.md#probe) is enabled (also see
-the [probe calibrate guide](Probe_Calibrate.md)):
-- `PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
-  [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
-  [SAMPLES_TOLERANCE_RETRIES=<count>]
-  [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
-  the probe triggers. If any of the optional parameters are provided
-  they override their equivalent setting in the
-  [probe config section](Config_Reference.md#probe).
-- `QUERY_PROBE`: Report the current status of the probe ("triggered"
-  or "open").
-- `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
-  [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum,
-  average, median, and standard deviation of multiple probe
-  samples. By default, 10 SAMPLES are taken. Otherwise the optional
-  parameters default to their equivalent setting in the probe config
-  section.
-- `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
-  helper script useful for calibrating the probe's z_offset. See the
-  PROBE command for details on the optional probe parameters. See the
-  MANUAL_PROBE command for details on the SPEED parameter and the
-  additional commands available while the tool is active. Please note,
-  the PROBE_CALIBRATE command uses the speed variable to move in XY direction
-  as well as Z.
-
-## BLTouch
-
-The following command is available when a
-[bltouch config section](Config_Reference.md#bltouch) is enabled (also
-see the [BL-Touch guide](BLTouch.md)):
-- `BLTOUCH_DEBUG COMMAND=<command>`: This sends a command to the
-  BLTouch. It may be useful for debugging. Available commands are:
-  `pin_down`, `touch_mode`, `pin_up`, `self_test`, `reset`,
-  (*1): `set_5V_output_mode`, `set_OD_output_mode`, `output_mode_store`
-
-  *** Note that the commands marked by (*1) are solely supported
-      by a BL-Touch V3.0 or V3.1(+)
-
-- `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
-  EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
-
-## Annexed Probe
-
-In addition to the normal commands available for a [probe], the following
-commands are available when an
-[annexed_probe config section](Config_Reference.md#annexed_probe) is enabled
-(also see the [Annexed Probe guide](Annexed_Probe.md)):
-
-- `ATTACH_PROBE`: Move to dock and attach probe to the toolhead, the toolhead
-  will return to its previous position after attaching.
-- `DETACH_PROBE`: Move to dock and detach probe from the toolhead, the toolhead
-  will return to its previous position after detaching.
-- `GET_PROBE_STATUS`: Respond with current probe state. This is useful for
-  verifying configuration settings are working as intended.
-- `SET_PROBE_STATUS STATE=UNKNOWN|ATTACHED|DOCKED`: If configured, this allows
-  the probe state to be set manually in the event automated probe verification
-  methods cannot be used.
-
-## Delta Calibration
+### [z_tilt]
 
 The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [<probe_parameter>=<value>]`: This command will probe
-the points specified in the config and then make independent
-adjustments to each Z stepper to compensate for tilt. See the PROBE
-command for details on the optional probe parameters.
+`Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This
+command will probe the points specified in the config and then make independent
+adjustments to each Z stepper to compensate for tilt. See the PROBE command for
+details on the optional probe parameters. The optional `HORIZONTAL_MOVE_Z`
+value overrides the `horizontal_move_z` option specified in the config file.

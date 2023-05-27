@@ -23,14 +23,14 @@ Printer is halted
 """
 
 message_protocol_error1 = """
-This type of error is frequently caused by running an older
-version of the firmware on the micro-controller (fix by
-recompiling and flashing the firmware).
+This is frequently caused by running an older version of the
+firmware on the MCU(s). Fix by recompiling and flashing the
+firmware.
 """
+
 message_protocol_error2 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
-Protocol error connecting to printer
 """
 
 message_mcu_connect_error = """
@@ -143,15 +143,33 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-    def _get_versions(self):
-        try:
-            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
-                     for n, m in self.lookup_objects('mcu')]
-            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
-            return "\nKnown versions: %s\n" % (", ".join(parts),)
-        except:
-            logging.exception("Error in _get_versions()")
-            return ""
+    def _build_protocol_error_message(self, e):
+        host_version = self.start_args['software_version']
+        msg_update = []
+        msg_updated = []
+        for mcu_name, mcu in self.lookup_objects('mcu'):
+            try:
+                mcu_version = mcu.get_status()['mcu_version']
+            except:
+                logging.exception("Unable to retrieve mcu_version from mcu")
+                continue
+            if mcu_version != host_version:
+                msg_update.append("%s: Current version %s"
+                                  % (mcu_name.split()[-1], mcu_version))
+            else:
+                msg_updated.append("%s: Current version %s"
+                                   % (mcu_name.split()[-1], mcu_version))
+        if not msg_update:
+            msg_update.append("<none>")
+        if not msg_updated:
+            msg_updated.append("<none>")
+        msg = ["MCU Protocol error",
+               message_protocol_error1,
+               "Your Klipper version is: %s" % (host_version,),
+               "MCU(s) which should be updated:"]
+        msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
+        msg += [message_protocol_error2, str(e)]
+        return "\n".join(msg)
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -166,9 +184,7 @@ class Printer:
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s\n%s%s%s" % (str(e), message_protocol_error1,
-                                          self._get_versions(),
-                                          message_protocol_error2))
+            self._set_state(self._build_protocol_error_message(e))
             util.dump_mcu_build()
             return
         except mcu.error as e:
@@ -215,8 +231,7 @@ class Printer:
         run_result = self.run_result
         try:
             if run_result == 'firmware_restart':
-                for n, m in self.lookup_objects(module='mcu'):
-                    m.microcontroller_restart()
+                self.send_event("klippy:firmware_restart")
             self.send_event("klippy:disconnect")
         except:
             logging.exception("Unhandled exception during post run")
@@ -326,14 +341,37 @@ def main():
         start_args['log_file'] = options.logfile
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
-        logging.basicConfig(level=debuglevel)
+        logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
-    start_args['software_version'] = util.get_git_version()
+    git_info = util.get_git_version()
+    git_vers = git_info["version"]
+    extra_files = [fname for code, fname in git_info["file_status"]
+                   if (code in ('??', '!!') and fname.endswith('.py')
+                       and (fname.startswith('klippy/kinematics/')
+                            or fname.startswith('klippy/extras/')))]
+    modified_files = [fname for code, fname in git_info["file_status"]
+                      if code == 'M']
+    extra_git_desc = ""
+    if extra_files:
+        if not git_vers.endswith('-dirty'):
+            git_vers = git_vers + '-dirty'
+        if len(extra_files) > 10:
+            extra_files[10:] = ["(+%d files)" % (len(extra_files) - 10,)]
+        extra_git_desc += "\nUntracked files: %s" % (', '.join(extra_files),)
+    if modified_files:
+        if len(modified_files) > 10:
+            modified_files[10:] = ["(+%d files)" % (len(modified_files) - 10,)]
+        extra_git_desc += "\nModified files: %s" % (', '.join(modified_files),)
+    extra_git_desc += "\nBranch: %s" % (git_info["branch"])
+    extra_git_desc += "\nRemote: %s" % (git_info["remote"])
+    extra_git_desc += "\nTracked URL: %s" % (git_info["url"])
+    start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
-            "Git version: %s" % (repr(start_args['software_version']),),
+            "Git version: %s%s" % (repr(start_args['software_version']),
+                                   extra_git_desc),
             "CPU: %s" % (start_args['cpu_info'],),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)

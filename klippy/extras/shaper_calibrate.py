@@ -3,7 +3,7 @@
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections, importlib, logging, math, multiprocessing
+import collections, importlib, logging, math, multiprocessing, traceback
 shaper_defs = importlib.import_module('.shaper_defs', 'extras')
 
 MIN_FREQ = 5.
@@ -333,6 +333,18 @@ class ShaperCalibrate:
             configfile.set('input_shaper', 'shaper_type_'+axis, shaper_name)
             configfile.set('input_shaper', 'shaper_freq_'+axis,
                            '%.1f' % (shaper_freq,))
+
+    def apply_params(self, input_shaper, axis, shaper_name, shaper_freq):
+        if axis == 'xy':
+            self.apply_params(input_shaper, 'x', shaper_name, shaper_freq)
+            self.apply_params(input_shaper, 'y', shaper_name, shaper_freq)
+            return
+        gcode = self.printer.lookup_object("gcode")
+        axis = axis.upper()
+        input_shaper.cmd_SET_INPUT_SHAPER(gcode.create_gcode_command(
+                "SET_INPUT_SHAPER", "SET_INPUT_SHAPER", {
+                    "SHAPER_TYPE_" + axis: shaper_name,
+                    "SHAPER_FREQ_" + axis: shaper_freq}))
 
     def save_calibration_data(self, output, calibration_data, shapers=None):
         try:
